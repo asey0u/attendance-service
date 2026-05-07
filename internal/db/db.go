@@ -2,13 +2,28 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"os"
 
 	_ "github.com/lib/pq"
 )
 
 func Init() *sql.DB {
-	connStr := "host=postgres port=5432 user=postgres password=password dbname=attendance_db sslmode=disable"
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+
+	connStr := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		host,
+		port,
+		user,
+		password,
+		dbname,
+	)
 
 	database, err := sql.Open("postgres", connStr)
 	if err != nil {
@@ -19,6 +34,8 @@ func Init() *sql.DB {
 	if err != nil {
 		log.Fatal("DB not connected:", err)
 	}
+
+	RunMigrations(database)
 
 	log.Println("DB connected")
 	return database

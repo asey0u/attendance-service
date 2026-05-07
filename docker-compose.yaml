@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
     postgres:
         image: postgres:16
@@ -10,7 +8,7 @@ services:
             POSTGRES_PASSWORD: ${DB_PASSWORD}
             POSTGRES_DB: ${DB_NAME}
         ports:
-            - "${DB_PORT}:{DB_INTERNAL_PORT}"
+            - "${DB_PORT}:5432"
         volumes:
             - postgres_data:/var/lib/postgresql/data
         networks:
@@ -25,7 +23,7 @@ services:
         env_file:
             - .env
         ports:
-            - "${APP_PORT}:${APP_INTERNAL_PORT}"
+            - "${APP_PORT}:8080"
         networks:
             - attendance_net
 

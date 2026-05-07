@@ -9,16 +9,11 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type contextKey string
-
-const UserContextKey = contextKey("user")
-
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		header := r.Header.Get("Authorization")
 		if header == "" {
-			http.Error(w, "missing token", 401)
+			http.Error(w, "missing token", http.StatusUnauthorized)
 			return
 		}
 
@@ -31,19 +26,29 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		})
 
 		if err != nil || !token.Valid {
-			http.Error(w, "invalid token", 401)
+			http.Error(w, "invalid token", http.StatusUnauthorized)
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), UserContextKey, claims)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth.ContextUserKey, claims)))
 	})
 }
 
 func GetUser(r *http.Request) *auth.Claims {
-	user := r.Context().Value(UserContextKey)
-	if user == nil {
-		return nil
-	}
-	return user.(*auth.Claims)
+	return auth.GetClaimsFromContext(r.Context())
+}
+
+func AdminMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := GetUser(r)
+		if user == nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		if user.Role != "admin" {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }

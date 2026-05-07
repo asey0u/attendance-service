@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"database/sql"
 	"errors"
 
 	"golang.org/x/crypto/bcrypt"
@@ -15,7 +16,6 @@ func NewService(r *Repository) *Service {
 }
 
 func (s *Service) Register(login, password string, employeeID int, role string) error {
-
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
@@ -24,7 +24,7 @@ func (s *Service) Register(login, password string, employeeID int, role string) 
 	user := User{
 		Login:      login,
 		Password:   string(hash),
-		EmployeeID: employeeID,
+		EmployeeID: sql.NullInt64{Int64: int64(employeeID), Valid: true},
 		Role:       role,
 	}
 
@@ -32,7 +32,6 @@ func (s *Service) Register(login, password string, employeeID int, role string) 
 }
 
 func (s *Service) Login(login, password string) (string, error) {
-
 	user, err := s.repo.GetByLogin(login)
 	if err != nil {
 		return "", errors.New("invalid credentials")
