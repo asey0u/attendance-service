@@ -1,0 +1,71 @@
+{{define "content"}}
+<header class="mb-8">
+  <div class="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-500 font-mono">Администрирование</div>
+  <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-900">Отделы</h1>
+  <p class="mt-1 text-slate-500">Создание отделов и назначение руководителей</p>
+</header>
+
+<section class="grid gap-6 md:grid-cols-3">
+
+  <div class="md:col-span-1">
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div class="border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 font-mono">Новый отдел</div>
+      </div>
+      <form method="post" action="/admin/departments" class="p-5 space-y-4 text-sm">
+        <label class="block">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Название</span>
+          <input name="name" required
+                 class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+        </label>
+        <button class="w-full rounded-lg bg-emerald-600 px-4 py-2.5 font-semibold text-white shadow-sm hover:bg-emerald-700 transition">Создать</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="md:col-span-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <table class="min-w-full divide-y divide-slate-100 text-sm">
+      <thead class="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <tr>
+          <th class="px-5 py-3">Отдел</th>
+          <th class="px-5 py-3">Руководитель</th>
+          <th class="px-5 py-3 text-right">Действия</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {{range .Rows}}
+          <tr id="dept-{{.ID}}" class="hover:bg-slate-50">
+            <td class="px-5 py-3 font-medium text-slate-900">{{.Name}}</td>
+            <td class="px-5 py-3">
+              {{- $cur := derefInt .ManagerID -}}
+              {{- $deptManagers := index $.ManagersByDept .ID -}}
+              {{if $deptManagers}}
+                <form method="post" action="/admin/departments/{{.ID}}/manager" class="inline-flex items-center gap-2">
+                  <select name="manager_user_id" class="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 focus:border-emerald-400 focus:outline-none">
+                    <option value="">— не назначен —</option>
+                    {{- range $m := $deptManagers -}}
+                      <option value="{{$m.ID}}" {{if eq $m.ID $cur}}selected{{end}}>{{$m.Login}} ({{$m.Name}})</option>
+                    {{- end -}}
+                  </select>
+                  <button class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 transition">OK</button>
+                </form>
+              {{else}}
+                <span class="text-xs text-slate-400">Нет руководителей в отделе</span>
+              {{end}}
+            </td>
+            <td class="px-5 py-3 text-right">
+              <button hx-delete="/admin/departments/{{.ID}}"
+                      hx-target="#dept-{{.ID}}" hx-swap="outerHTML swap:200ms"
+                      hx-confirm="Удалить отдел «{{.Name}}»?"
+                      class="rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition">Удалить</button>
+            </td>
+          </tr>
+        {{else}}
+          <tr><td colspan="3" class="px-5 py-12 text-center text-slate-400">Отделов нет.</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+
+</section>
+{{end}}

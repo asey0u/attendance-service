@@ -1,0 +1,58 @@
+{{define "content"}}
+<div class="w-full max-w-md">
+
+  <div class="mb-8 flex items-center gap-3">
+    <span class="grid h-12 w-12 place-items-center rounded-xl bg-emerald-600 text-white font-mono font-bold text-xl shadow-lg shadow-emerald-200">У</span>
+    <div>
+      <div class="text-xl font-bold tracking-tight text-slate-900">Учёт посещаемости</div>
+      <div class="text-[11px] uppercase tracking-[0.2em] text-slate-400 font-mono">attendance system</div>
+    </div>
+  </div>
+
+  <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60">
+    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Вход в систему</h1>
+    <p class="mt-1 text-sm text-slate-500">Введите логин и пароль для продолжения</p>
+
+    {{if .Error}}
+      <div class="mt-5 flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3">
+        <svg class="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-500" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 9V5a1 1 0 112 0v4a1 1 0 11-2 0zm1 4a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"/>
+        </svg>
+        <span class="text-sm text-rose-700">{{.Error}}</span>
+      </div>
+    {{end}}
+
+    <form method="post" action="/login" class="mt-6 space-y-4">
+      <label class="block">
+        <span class="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">Логин</span>
+        <input name="login" type="text" required autocomplete="username" autofocus
+               value="{{.Login}}"
+               class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 shadow-sm
+                      focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition
+                      {{if .Error}}border-rose-300 bg-rose-50{{end}}">
+      </label>
+
+      <label class="block">
+        <span class="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">Пароль</span>
+        <input name="password" type="password" required autocomplete="current-password"
+               class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 shadow-sm
+                      focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition
+                      {{if .Error}}border-rose-300 bg-rose-50{{end}}">
+      </label>
+
+      <button class="w-full rounded-lg bg-emerald-600 px-4 py-2.5 font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition">
+        Войти →
+      </button>
+    </form>
+
+    <details class="mt-6 text-xs text-slate-400">
+      <summary class="cursor-pointer hover:text-slate-600 select-none">Демо-аккаунты</summary>
+      <ul class="mt-3 space-y-1 font-mono text-slate-500">
+        <li><span class="text-emerald-600 font-semibold">admin</span> / admin</li>
+        <li><span class="text-emerald-600 font-semibold">manager</span> / manager123</li>
+        <li><span class="text-emerald-600 font-semibold">user1</span> ... <span class="text-emerald-600 font-semibold">user5</span> / employee1 ... employee5</li>
+      </ul>
+    </details>
+  </div>
+</div>
+{{end}}

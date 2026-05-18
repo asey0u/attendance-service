@@ -1,0 +1,117 @@
+{{define "base"}}<!doctype html>
+<html lang="ru" class="h-full">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{.Title}} · Учёт</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      body{font-family:'Manrope',ui-sans-serif,system-ui,sans-serif;}
+      .font-mono,.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;}
+      tbody tr{transition:background-color .12s ease;}
+      .htmx-swapping{opacity:0;transition:opacity .2s ease;}
+      .htmx-settling{opacity:1;transition:opacity .2s ease;}
+    </style>
+</head>
+<body class="min-h-full bg-slate-50 text-slate-900">
+
+{{if .Claims}}
+<div class="flex min-h-screen">
+
+  <!-- ── Sidebar ───────────────────────────────────────────────────────── -->
+  <aside class="hidden md:flex w-64 flex-shrink-0 flex-col border-r border-slate-200 bg-white sticky top-0 h-screen overflow-y-auto">
+    <a href="/" class="flex items-center gap-3 px-6 py-5 border-b border-slate-100">
+      <span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-600 text-white font-mono font-bold text-base">У</span>
+      <span>
+        <div class="text-sm font-bold tracking-tight text-slate-900">Учёт</div>
+        <div class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-mono">attendance</div>
+      </span>
+    </a>
+
+    <nav class="flex-1 px-3 py-5 space-y-0.5 text-sm">
+      {{if eq .Claims.Role "admin"}}
+        {{template "nav_item" dict "Href" "/admin"             "Label" "Обзор"          "Active" (eq .NavKey "dash")}}
+        {{template "nav_item" dict "Href" "/admin/users"       "Label" "Пользователи"   "Active" (eq .NavKey "users")}}
+        {{template "nav_item" dict "Href" "/admin/employees"   "Label" "Сотрудники"     "Active" (eq .NavKey "emps")}}
+        {{template "nav_item" dict "Href" "/admin/departments" "Label" "Отделы"         "Active" (eq .NavKey "depts")}}
+        {{template "nav_item" dict "Href" "/admin/attendance"  "Label" "Посещаемость"   "Active" (eq .NavKey "att")}}
+        {{template "nav_item" dict "Href" "/admin/tickets"     "Label" "Заявки"         "Active" (eq .NavKey "tickets")}}
+      {{else if eq .Claims.Role "manager"}}
+        {{template "nav_item" dict "Href" "/manager"            "Label" "Обзор"          "Active" (eq .NavKey "dash")}}
+        {{template "nav_item" dict "Href" "/manager/attendance" "Label" "Посещаемость"   "Active" (eq .NavKey "att")}}
+        {{template "nav_item" dict "Href" "/manager/tickets"    "Label" "Заявки"         "Active" (eq .NavKey "tickets")}}
+        {{template "nav_item" dict "Href" "/manager/employees"  "Label" "Команда"        "Active" (eq .NavKey "team")}}
+        {{template "nav_item" dict "Href" "/manager/settings"  "Label" "Настройки"      "Active" (eq .NavKey "settings")}}
+        <div class="my-3 border-t border-slate-100"></div>
+        {{template "nav_item" dict "Href" "/me"                 "Label" "Мой профиль"    "Active" (eq .NavKey "me")}}
+      {{else}}
+        {{template "nav_item" dict "Href" "/me"            "Label" "Главная"        "Active" (eq .NavKey "dash")}}
+        {{template "nav_item" dict "Href" "/me/attendance" "Label" "Посещаемость"   "Active" (eq .NavKey "att")}}
+        {{template "nav_item" dict "Href" "/me/tickets"    "Label" "Заявки"         "Active" (eq .NavKey "tickets")}}
+      {{end}}
+    </nav>
+
+    <div class="border-t border-slate-100 px-4 py-4">
+      <div class="flex items-center gap-3">
+        <div class="grid h-9 w-9 place-items-center rounded-full bg-emerald-100 font-mono text-sm uppercase font-semibold text-emerald-700">
+          {{firstChar .Claims.Login}}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="truncate text-sm font-semibold text-slate-800">{{.Claims.Login}}</div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-400 font-mono">{{roleLabel .Claims.Role}}</div>
+        </div>
+        <form method="post" action="/logout">
+          <button title="Выйти" class="grid h-8 w-8 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h6a1 1 0 010 2H5v10h5a1 1 0 010 2H4a1 1 0 01-1-1V4zm10.293 3.293a1 1 0 011.414 0L17.414 10l-2.707 2.707a1 1 0 11-1.414-1.414L14.586 11H8a1 1 0 110-2h6.586l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main column ─────────────────────────────────────────────────── -->
+  <div class="flex-1 min-w-0 flex flex-col">
+    <!-- mobile top bar -->
+    <div class="md:hidden flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
+      <a href="/" class="flex items-center gap-2">
+        <span class="grid h-8 w-8 place-items-center rounded-lg bg-emerald-600 text-white font-mono font-bold text-sm">У</span>
+        <span class="font-bold text-slate-900">Учёт</span>
+      </a>
+      <form method="post" action="/logout">
+        <button class="rounded-md border border-slate-300 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50">Выйти</button>
+      </form>
+    </div>
+
+    <main class="flex-1">
+      <div class="mx-auto max-w-7xl px-4 py-10 md:px-10">
+        {{template "content" .}}
+      </div>
+    </main>
+  </div>
+
+</div>
+{{else}}
+  <main class="min-h-screen bg-gradient-to-br from-slate-100 via-white to-emerald-50 flex items-center justify-center px-4">
+    {{template "content" .}}
+  </main>
+{{end}}
+
+</body>
+</html>
+{{end}}
+
+{{define "nav_item"}}
+<a href="{{.Href}}"
+   class="group flex items-center gap-3 rounded-lg px-3 py-2 transition font-medium
+          {{if .Active}}bg-emerald-50 text-emerald-700{{else}}text-slate-500 hover:bg-slate-50 hover:text-slate-900{{end}}">
+  <span class="h-1.5 w-1.5 rounded-full flex-shrink-0
+               {{if .Active}}bg-emerald-600{{else}}bg-slate-300 group-hover:bg-slate-400{{end}}"></span>
+  {{.Label}}
+</a>
+{{end}}

@@ -1,0 +1,12 @@
+{{define "employee_search_results"}}
+{{range .Rows}}
+<button type="button"
+        onclick="selectEmployee({{.ID}}, '{{.FirstName}} {{.LastName}}', '{{.Position}}')"
+        class="w-full text-left px-4 py-2.5 hover:bg-emerald-50 border-b border-slate-100 last:border-0 transition">
+  <div class="text-sm font-medium text-slate-900">{{.FirstName}} {{.LastName}}</div>
+  <div class="text-xs text-slate-400">{{.Position}}{{if .DepartmentName}} · {{derefStr .DepartmentName}}{{end}}</div>
+</button>
+{{else}}
+<div class="px-4 py-3 text-sm text-slate-400">Сотрудники не найдены</div>
+{{end}}
+{{end}}

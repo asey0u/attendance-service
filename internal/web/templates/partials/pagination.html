@@ -1,0 +1,24 @@
+{{define "pagination"}}
+{{if gt .Pager.TotalPages 1}}
+<div class="flex items-center justify-between border-t border-slate-100 px-5 py-3">
+  <span class="text-xs text-slate-400">
+    {{if eq .Pager.Total 0}}Нет записей{{else}}{{.Pager.From}}–{{.Pager.To}} из {{.Pager.Total}}{{end}}
+  </span>
+  <div class="flex items-center gap-1">
+    {{if .Pager.HasPrev}}
+      <a href="{{.Pager.BaseURL}}page={{.Pager.PrevPage}}"
+         class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition">← Назад</a>
+    {{else}}
+      <span class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-300 cursor-not-allowed">← Назад</span>
+    {{end}}
+    <span class="px-3 py-1.5 text-xs font-mono text-slate-500">{{.Pager.Page}} / {{.Pager.TotalPages}}</span>
+    {{if .Pager.HasNext}}
+      <a href="{{.Pager.BaseURL}}page={{.Pager.NextPage}}"
+         class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition">Вперёд →</a>
+    {{else}}
+      <span class="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-300 cursor-not-allowed">Вперёд →</span>
+    {{end}}
+  </div>
+</div>
+{{end}}
+{{end}}

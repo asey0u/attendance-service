@@ -3,61 +3,102 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
+	"time"
 
-	"github.com/asey0u/attendance-service/internal/admin"
+	"github.com/asey0u/attendance-service/internal/appsettings"
 	"github.com/asey0u/attendance-service/internal/attendance"
 	"github.com/asey0u/attendance-service/internal/auth"
-	"github.com/asey0u/attendance-service/internal/db"
-	"github.com/asey0u/attendance-service/internal/middleware"
+	"github.com/asey0u/attendance-service/internal/config"
+	"github.com/asey0u/attendance-service/internal/database"
+	"github.com/asey0u/attendance-service/internal/department"
+	"github.com/asey0u/attendance-service/internal/employee"
+	"github.com/asey0u/attendance-service/internal/server"
+	"github.com/asey0u/attendance-service/internal/ticket"
+	"github.com/asey0u/attendance-service/internal/web"
 )
 
+func init() {
+	msk, err := time.LoadLocation("Europe/Moscow")
+	if err != nil {
+		msk = time.FixedZone("MSK", 3*60*60)
+	}
+	time.Local = msk
+}
+
 func main() {
-	database := db.Init()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("config: %v", err)
+	}
 
-	authRepo := auth.NewRepository(database)
-	authService := auth.NewService(authRepo)
-	authHandler := auth.NewHandler(authService)
+	db, err := database.Open(cfg.DSN())
+	if err != nil {
+		log.Fatalf("db: %v", err)
+	}
+	defer db.Close()
 
-	adminRepo := admin.NewRepository(database)
-	adminService := admin.NewService(adminRepo)
-	adminHandler := admin.NewHandler(adminService)
+	if err = database.Migrate(db, "migrations"); err != nil {
+		log.Fatalf("migrate: %v", err)
+	}
 
-	attRepo := attendance.NewRepository(database)
-	attService := attendance.NewService(attRepo)
-	attHandler := attendance.NewHandler(attService)
+	signer := auth.NewSigner(cfg.JWTSecret)
 
-	http.HandleFunc("/login", authHandler.Login)
-	http.HandleFunc("/register", authHandler.Register)
-	http.HandleFunc("/setup/status", adminHandler.SetupStatus)
-	http.HandleFunc("/setup/admin", adminHandler.CreateAdmin)
+	authRepo := auth.NewRepository(db)
+	authSvc := auth.NewService(authRepo, signer)
+	authHandler := auth.NewHandler(authSvc)
 
-	http.Handle("/attendance/check-in",
-		middleware.AuthMiddleware(http.HandlerFunc(attHandler.CheckIn)),
-	)
+	empRepo := employee.NewRepository(db)
+	empSvc := employee.NewService(empRepo)
+	empHandler := employee.NewHandler(empSvc)
 
-	http.Handle("/attendance/me",
-		middleware.AuthMiddleware(http.HandlerFunc(attHandler.MyAttendance)),
-	)
+	deptRepo := department.NewRepository(db)
+	deptSvc := department.NewService(deptRepo)
+	deptHandler := department.NewHandler(deptSvc)
 
-	adminMux := http.NewServeMux()
-	adminMux.HandleFunc("/users", adminHandler.ListUsers)
-	adminMux.HandleFunc("/users/create", adminHandler.CreateUser)
-	adminMux.HandleFunc("/users/delete", adminHandler.DeleteUser)
-	adminMux.HandleFunc("/users/update-role", adminHandler.UpdateUserRole)
-	adminMux.HandleFunc("/users/", adminHandler.GetUserByID)
-	adminMux.HandleFunc("/employees", adminHandler.ListEmployees)
-	adminMux.HandleFunc("/employees/create", adminHandler.CreateEmployee)
-	adminMux.HandleFunc("/attendances", adminHandler.GetAttendancesByEmployee)
-	adminMux.HandleFunc("/attendances/create", adminHandler.CreateAttendance)
-	adminMux.HandleFunc("/attendances/delete", adminHandler.DeleteAttendance)
-	adminMux.HandleFunc("/me", adminHandler.GetCurrentUser)
+	settingsRepo := appsettings.NewRepository(db)
+	settingsSvc := appsettings.NewService(settingsRepo)
 
-	http.Handle("/admin/", http.StripPrefix("/admin", middleware.AuthMiddleware(middleware.AdminMiddleware(adminMux))))
+	attRepo := attendance.NewRepository(db)
+	attSvc := attendance.NewService(attRepo, settingsSvc)
+	attHandler := attendance.NewHandler(attSvc)
 
-	appHost := os.Getenv("APP_HOST")
-	appPort := os.Getenv("APP_PORT")
+	tickRepo := ticket.NewRepository(db)
+	tickSvc := ticket.NewService(tickRepo)
+	tickHandler := ticket.NewHandler(tickSvc)
 
-	log.Println("server started :", appPort)
-	http.ListenAndServe(appHost+":"+appPort, nil)
+	webHandler, err := web.New(&web.Deps{
+		DB:                db,
+		Signer:            signer,
+		AuthService:       authSvc,
+		EmployeeService:   empSvc,
+		DepartmentService: deptSvc,
+		AttendanceService: attSvc,
+		TicketService:     tickSvc,
+		SettingsService:   settingsSvc,
+	})
+
+	if err != nil {
+		log.Fatalf("web: %v", err)
+	}
+
+	handler := server.New(&server.Deps{
+		Signer:            signer,
+		AuthHandler:       authHandler,
+		EmployeeHandler:   empHandler,
+		DepartmentHandler: deptHandler,
+		AttendanceHandler: attHandler,
+		TicketHandler:     tickHandler,
+		Web:               webHandler,
+	})
+
+	srv := &http.Server{
+		Addr:              cfg.Addr(),
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+
+	log.Printf("server listening on %s", cfg.Addr())
+	if err = srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("listen: %v", err)
+	}
 }

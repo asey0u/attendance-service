@@ -1,0 +1,41 @@
+{{define "content"}}
+<header class="mb-10">
+  <div class="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-500 font-mono">Администрирование</div>
+  <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-900">Обзор системы</h1>
+  <p class="mt-1 text-slate-500">Состояние всей системы и быстрые ссылки</p>
+</header>
+
+<section class="grid gap-4 md:grid-cols-4">
+  <a href="/admin/users" class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition">
+    <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 font-mono">Пользователи</div>
+    <div class="mt-2 text-4xl font-bold font-mono text-slate-900">{{.UserCount}}</div>
+    <div class="mt-2 text-xs font-medium text-emerald-500 opacity-0 group-hover:opacity-100 transition">Открыть →</div>
+  </a>
+  <a href="/admin/employees" class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition">
+    <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 font-mono">Сотрудники</div>
+    <div class="mt-2 text-4xl font-bold font-mono text-slate-900">{{.EmpCount}}</div>
+    <div class="mt-2 text-xs font-medium text-emerald-500 opacity-0 group-hover:opacity-100 transition">Открыть →</div>
+  </a>
+  <a href="/admin/departments" class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition">
+    <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 font-mono">Отделы</div>
+    <div class="mt-2 text-4xl font-bold font-mono text-slate-900">{{.DeptCount}}</div>
+    <div class="mt-2 text-xs font-medium text-emerald-500 opacity-0 group-hover:opacity-100 transition">Открыть →</div>
+  </a>
+  <a href="/admin/tickets" class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:border-amber-200 hover:shadow-md transition">
+    <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 font-mono">Ожидают</div>
+    <div class="mt-2 text-4xl font-bold font-mono text-amber-600">{{.PendingTks}}</div>
+    <div class="mt-2 text-xs font-medium text-amber-500 opacity-0 group-hover:opacity-100 transition">Рассмотреть →</div>
+  </a>
+</section>
+
+<section class="mt-10 grid gap-4 md:grid-cols-2">
+  <a href="/admin/attendance" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition">
+    <div class="text-lg font-semibold tracking-tight text-slate-900">Журнал посещаемости</div>
+    <p class="mt-1 text-sm text-slate-500">Фильтрация по всем сотрудникам и отделам.</p>
+  </a>
+  <a href="/admin/tickets" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition">
+    <div class="text-lg font-semibold tracking-tight text-slate-900">Все заявки</div>
+    <p class="mt-1 text-sm text-slate-500">Просмотр и удаление любых заявок.</p>
+  </a>
+</section>
+{{end}}

@@ -1,0 +1,25 @@
+{{define "admin_attendance_rows"}}
+{{range .Rows}}
+  <tr id="att-{{.ID}}" class="hover:bg-slate-50">
+    <td class="px-5 py-3 font-medium text-slate-900">{{.FirstName}} {{.LastName}}</td>
+    <td class="px-5 py-3 text-slate-500">{{.Position}}</td>
+    <td class="px-5 py-3 font-mono text-slate-600">{{formatDate .CheckIn}}</td>
+    <td class="px-5 py-3 font-mono text-slate-600">{{formatTime .CheckIn}}</td>
+    <td class="px-5 py-3 font-mono text-slate-600">{{formatTimePtr .CheckOut}}</td>
+    <td class="px-5 py-3">{{statusBadge .Status}}</td>
+    <td class="px-5 py-3 text-right">
+      <button hx-delete="/admin/attendance/{{.ID}}"
+              hx-target="#att-{{.ID}}" hx-swap="outerHTML swap:200ms"
+              hx-confirm="Удалить запись?"
+              class="rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition">Удалить</button>
+    </td>
+  </tr>
+{{else}}
+  <tr><td colspan="7" class="px-5 py-12 text-center text-slate-400">Записей не найдено.</td></tr>
+{{end}}
+{{if .HXRequest}}
+  <div id="att-pagination" hx-swap-oob="innerHTML">
+    {{template "pagination" .}}
+  </div>
+{{end}}
+{{end}}

@@ -1,0 +1,91 @@
+{{define "content"}}
+<header class="mb-10">
+  <div class="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-500 font-mono">Главная</div>
+  <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-900">Здравствуйте, {{.Claims.Login}}</h1>
+  <p class="mt-1 text-slate-500">{{roleLabel .Claims.Role}}</p>
+</header>
+
+{{if .Error}}
+<div class="mb-6 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+  {{.Error}}
+</div>
+{{end}}
+
+<section class="grid gap-6 md:grid-cols-3">
+
+  <!-- ── Today card ────────────────────────────────────────────────── -->
+  <div class="md:col-span-2 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-6 py-3">
+      <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 font-mono">Сегодня · {{today}}</div>
+      {{if .Today}}{{statusBadge .Today.Status}}{{end}}
+    </div>
+
+    <div class="p-6">
+      {{if not (derefInt .Claims.EmployeeID)}}
+        <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          У вашего аккаунта нет привязанного профиля сотрудника. Обратитесь к администратору.
+        </div>
+      {{else if .Today}}
+        <div class="flex items-start gap-10">
+          <div>
+            <div class="text-xs font-semibold uppercase tracking-wider text-slate-400">Приход</div>
+            <div class="mt-1 text-3xl font-bold font-mono text-slate-900">{{formatTime .Today.CheckIn}}</div>
+          </div>
+          <div class="mt-4 text-slate-300 text-xl">→</div>
+          <div>
+            <div class="text-xs font-semibold uppercase tracking-wider text-slate-400">Уход</div>
+            <div class="mt-1 text-3xl font-bold font-mono {{if .Today.CheckOut}}text-slate-900{{else}}text-slate-300{{end}}">
+              {{formatTimePtr .Today.CheckOut}}
+            </div>
+          </div>
+        </div>
+        <div class="mt-8">
+          {{if not .Today.CheckOut}}
+            <form method="post" action="/me/check-out">
+              <button class="rounded-lg bg-rose-600 px-5 py-2.5 font-semibold text-white shadow-sm hover:bg-rose-700 transition">
+                Отметить уход
+              </button>
+            </form>
+          {{else}}
+            <div class="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">
+              <span>✓</span> Рабочий день завершён
+            </div>
+          {{end}}
+        </div>
+      {{else}}
+        <p class="text-slate-500">Вы ещё не отметили приход сегодня.</p>
+        <form method="post" action="/me/check-in" class="mt-6">
+          <button class="rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-emerald-700 transition">
+            Отметить приход
+          </button>
+        </form>
+      {{end}}
+    </div>
+  </div>
+
+  <!-- ── Stats card ────────────────────────────────────────────────── -->
+  <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <div class="border-b border-slate-100 bg-slate-50 px-6 py-3">
+      <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 font-mono">Статистика</div>
+    </div>
+    <dl class="p-6 space-y-5">
+      <div>
+        <dt class="text-xs font-medium text-slate-500">Дней присутствия</dt>
+        <dd class="mt-1 text-3xl font-bold font-mono text-slate-900">{{.Stats.DaysPresent}}</dd>
+      </div>
+      <div>
+        <dt class="text-xs font-medium text-slate-500">Дней с опозданием</dt>
+        <dd class="mt-1 text-3xl font-bold font-mono text-amber-600">{{.Stats.DaysLate}}</dd>
+      </div>
+      <div>
+        <dt class="text-xs font-medium text-slate-500">В среднем часов / день</dt>
+        <dd class="mt-1 text-3xl font-bold font-mono text-slate-900">{{hours .Stats.AverageHours}}</dd>
+      </div>
+    </dl>
+    <a href="/me/attendance" class="block border-t border-slate-100 bg-slate-50 px-6 py-3 text-center text-sm font-medium text-emerald-600 hover:bg-emerald-50 transition">
+      Вся история →
+    </a>
+  </div>
+
+</section>
+{{end}}

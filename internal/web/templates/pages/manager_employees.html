@@ -1,0 +1,32 @@
+{{define "content"}}
+<header class="mb-8">
+  <div class="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-500 font-mono">Команда</div>
+  <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+    {{if eq .Claims.Role "admin"}}Все сотрудники{{else}}Сотрудники отдела{{end}}
+  </h1>
+  <p class="mt-1 text-slate-500">Список сотрудников и их должностей</p>
+</header>
+
+<section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+  <table class="min-w-full divide-y divide-slate-100 text-sm">
+    <thead class="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <tr>
+        <th class="px-5 py-3">ФИО</th>
+        <th class="px-5 py-3">Должность</th>
+        <th class="px-5 py-3">Отдел</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {{range .Rows}}
+        <tr class="hover:bg-slate-50">
+          <td class="px-5 py-3 font-medium text-slate-900">{{.FirstName}} {{.LastName}}</td>
+          <td class="px-5 py-3 text-slate-600">{{.Position}}</td>
+          <td class="px-5 py-3 text-slate-500">{{derefStr .DepartmentName}}</td>
+        </tr>
+      {{else}}
+        <tr><td colspan="3" class="px-5 py-12 text-center text-slate-400">Список пуст.</td></tr>
+      {{end}}
+    </tbody>
+  </table>
+</section>
+{{end}}

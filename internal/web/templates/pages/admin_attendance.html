@@ -1,0 +1,65 @@
+{{define "content"}}
+<header class="mb-8">
+  <div class="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-500 font-mono">Администрирование</div>
+  <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-900">Журнал посещаемости</h1>
+  <p class="mt-1 text-slate-500">Все записи — фильтрация по имени, фамилии, должности</p>
+</header>
+
+<section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+  <form hx-get="/admin/attendance"
+        hx-target="#att-table tbody"
+        hx-swap="innerHTML"
+        hx-push-url="true"
+        class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+    <label class="block">
+      <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Имя</span>
+      <input name="first_name" value="{{.FirstName}}"
+             class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+    </label>
+    <label class="block">
+      <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Фамилия</span>
+      <input name="last_name" value="{{.LastName}}"
+             class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+    </label>
+    <label class="block">
+      <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Должность</span>
+      <input name="position" value="{{.Position}}"
+             class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+    </label>
+    <label class="block">
+      <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">С</span>
+      <input name="from" type="date" value="{{.From}}"
+             class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+    </label>
+    <label class="block">
+      <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">По</span>
+      <input name="to" type="date" value="{{.To}}"
+             class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+    </label>
+    <div class="flex items-end gap-2">
+      <button class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition">Найти</button>
+      <a href="/admin/attendance" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">Сбросить</a>
+    </div>
+  </form>
+</section>
+
+<section class="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+  <table id="att-table" class="min-w-full divide-y divide-slate-100 text-sm">
+    <thead class="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <tr>
+        <th class="px-5 py-3">Сотрудник</th>
+        <th class="px-5 py-3">Должность</th>
+        <th class="px-5 py-3">Дата</th>
+        <th class="px-5 py-3">Приход</th>
+        <th class="px-5 py-3">Уход</th>
+        <th class="px-5 py-3">Статус</th>
+        <th class="px-5 py-3 text-right">Действия</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {{template "admin_attendance_rows" .}}
+    </tbody>
+  </table>
+  <div id="att-pagination">{{template "pagination" .}}</div>
+</section>
+{{end}}

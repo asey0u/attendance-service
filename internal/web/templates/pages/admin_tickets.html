@@ -1,0 +1,56 @@
+{{define "content"}}
+<header class="mb-8 flex items-end justify-between">
+  <div>
+    <div class="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-500 font-mono">Администрирование</div>
+    <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-900">Все заявки</h1>
+    <p class="mt-1 text-slate-500">Просмотр и удаление любых заявок</p>
+  </div>
+  <div class="flex gap-1">
+    <a href="/admin/tickets"
+       class="rounded-lg px-3 py-1.5 text-xs font-semibold transition
+              {{if eq .Status ""}}bg-emerald-600 text-white shadow-sm{{else}}border border-slate-300 text-slate-600 hover:bg-slate-50{{end}}">все</a>
+    {{range $s := strs "pending" "approved" "declined"}}
+      <a href="/admin/tickets?status={{$s}}"
+         class="rounded-lg px-3 py-1.5 text-xs font-semibold transition
+                {{if eq $.Status $s}}bg-emerald-600 text-white shadow-sm{{else}}border border-slate-300 text-slate-600 hover:bg-slate-50{{end}}">
+        {{statusLabel $s}}
+      </a>
+    {{end}}
+  </div>
+</header>
+
+<section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+  <table class="min-w-full divide-y divide-slate-100 text-sm">
+    <thead class="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <tr>
+        <th class="px-5 py-3">Сотрудник</th>
+        <th class="px-5 py-3">Дата</th>
+        <th class="px-5 py-3">Причина</th>
+        <th class="px-5 py-3">Статус</th>
+        <th class="px-5 py-3">Создано</th>
+        <th class="px-5 py-3 text-right">Действия</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {{range .Rows}}
+        <tr id="ticket-{{.ID}}" class="hover:bg-slate-50">
+          <td class="px-5 py-3 font-medium text-slate-900">{{.FirstName}} {{.LastName}}</td>
+          <td class="px-5 py-3 font-mono text-slate-600">{{formatDate .TicketDate}}</td>
+          <td class="px-5 py-3 text-slate-600">{{.Reason}}</td>
+          <td class="px-5 py-3">{{statusBadge .Status}}</td>
+          <td class="px-5 py-3 font-mono text-xs text-slate-400">{{formatTime .CreatedAt}}</td>
+          <td class="px-5 py-3 text-right">
+            <button hx-delete="/admin/tickets/{{.ID}}"
+                    hx-target="#ticket-{{.ID}}" hx-swap="outerHTML swap:200ms"
+                    hx-confirm="Удалить заявку?"
+                    class="rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition">Удалить</button>
+          </td>
+        </tr>
+      {{else}}
+        <tr><td colspan="6" class="px-5 py-12 text-center text-slate-400">Заявок нет.</td></tr>
+      {{end}}
+    </tbody>
+  </table>
+  {{template "pagination" .}}
+</section>
+{{end}}

@@ -2,43 +2,68 @@ package auth
 
 import (
 	"context"
-	"os"
+	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var JwtKey = []byte(os.Getenv("JWT-secret"))
-
-type ContextKey string
-
-const ContextUserKey = ContextKey("user")
+const TokenTTL = 24 * time.Hour
 
 type Claims struct {
-	UserID     int
-	EmployeeID int
-	Role       string
+	UserID       int    `json:"uid"`
+	Login        string `json:"login"`
+	Role         string `json:"role"`
+	EmployeeID   *int   `json:"eid,omitempty"`
+	DepartmentID *int   `json:"did,omitempty"`
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(user *User) (string, error) {
-	claims := Claims{
-		UserID:     user.ID,
-		EmployeeID: int(user.EmployeeID.Int64),
-		Role:       user.Role,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-		},
-	}
+type ctxKey struct{}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(JwtKey)
+var claimsCtxKey = ctxKey{}
+
+func WithClaims(ctx context.Context, c *Claims) context.Context {
+	return context.WithValue(ctx, claimsCtxKey, c)
 }
 
-func GetClaimsFromContext(ctx context.Context) *Claims {
-	user, ok := ctx.Value(ContextUserKey).(*Claims)
-	if !ok {
-		return nil
+func FromContext(ctx context.Context) *Claims {
+	c, _ := ctx.Value(claimsCtxKey).(*Claims)
+
+	return c
+}
+
+type Signer struct {
+	secret []byte
+}
+
+func NewSigner(secret []byte) *Signer {
+	return &Signer{secret: secret}
+}
+
+func (s *Signer) Sign(c *Claims) (string, error) {
+	c.RegisteredClaims = jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(TokenTTL)),
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}
-	return user
+
+	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
+
+	return tok.SignedString(s.secret)
+}
+
+func (s *Signer) Parse(tokenStr string) (*Claims, error) {
+	claims := &Claims{}
+	tok, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
+		return s.secret, nil
+	})
+
+	if err != nil || !tok.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	return claims, nil
 }

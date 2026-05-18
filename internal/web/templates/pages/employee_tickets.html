@@ -1,0 +1,70 @@
+{{define "content"}}
+<header class="mb-8">
+  <div class="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-500 font-mono">Заявки</div>
+  <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-900">Мои заявки</h1>
+  <p class="mt-1 text-slate-500">Пояснение причины отсутствия в офисе</p>
+</header>
+
+<section class="grid gap-6 md:grid-cols-3">
+
+  <div class="md:col-span-1">
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div class="border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 font-mono">Новая заявка</div>
+      </div>
+      <form method="post" action="/me/tickets" class="p-5 space-y-4 text-sm">
+        <label class="block">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Дата</span>
+          <input name="ticket_date" type="date" required value="{{today}}"
+                 class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+        </label>
+        <label class="block">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Причина</span>
+          <textarea name="reason" rows="4" required
+                    class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    placeholder="Опишите причину отсутствия"></textarea>
+        </label>
+        <button class="w-full rounded-lg bg-emerald-600 px-4 py-2.5 font-semibold text-white shadow-sm hover:bg-emerald-700 transition">
+          Отправить
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="md:col-span-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <table class="min-w-full divide-y divide-slate-100 text-sm">
+      <thead class="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <tr>
+          <th class="px-5 py-3">Дата</th>
+          <th class="px-5 py-3">Причина</th>
+          <th class="px-5 py-3">Статус</th>
+          <th class="px-5 py-3 text-right">Действия</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {{range .Rows}}
+          <tr id="ticket-{{.ID}}" class="hover:bg-slate-50">
+            <td class="px-5 py-3 font-mono font-medium text-slate-900">{{formatDate .TicketDate}}</td>
+            <td class="px-5 py-3 text-slate-600">{{.Reason}}</td>
+            <td class="px-5 py-3">{{statusBadge .Status}}</td>
+            <td class="px-5 py-3 text-right">
+              {{if eq .Status "pending"}}
+                <button hx-delete="/me/tickets/{{.ID}}"
+                        hx-target="#ticket-{{.ID}}"
+                        hx-swap="outerHTML swap:200ms"
+                        hx-confirm="Удалить заявку?"
+                        class="rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition">Удалить</button>
+              {{else}}
+                <span class="text-xs text-slate-300">—</span>
+              {{end}}
+            </td>
+          </tr>
+        {{else}}
+          <tr><td colspan="4" class="px-5 py-12 text-center text-slate-400">Заявок пока нет.</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+
+</section>
+{{end}}
