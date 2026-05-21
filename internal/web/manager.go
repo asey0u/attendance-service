@@ -20,22 +20,14 @@ func (h *Handler) ManagerDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	attFilter := domain.AttendanceFilter{}
+	var deptID *int
 	if claims.Role == domain.RoleManager {
-		attFilter.DepartmentID = claims.DepartmentID
+		deptID = claims.DepartmentID
 	}
-	att, err := h.attSvc.ListFiltered(r.Context(), attFilter)
+	presentToday, err := h.attSvc.CountPresentToday(r.Context(), deptID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	today := todayStr()
-	presentToday := 0
-	for _, a := range att {
-		if a.CheckIn.Local().Format("2006-01-02") == today {
-			presentToday++
-		}
 	}
 
 	empFilter := domain.EmployeeFilter{}

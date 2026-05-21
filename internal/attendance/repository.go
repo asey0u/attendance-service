@@ -143,6 +143,36 @@ func (r *Repository) CheckOut(ctx context.Context, employeeID int, t time.Time, 
 	return &a, nil
 }
 
+func (r *Repository) CountPresentToday(ctx context.Context, deptID *int) (int, error) {
+	q := `SELECT COUNT(*) FROM v_attendance_today`
+	var args []any
+	if deptID != nil {
+		args = append(args, *deptID)
+		q += ` WHERE department_id = $1`
+	}
+
+	var n int
+	err := r.dbtx(ctx).QueryRowContext(ctx, q, args...).Scan(&n)
+	return n, err
+}
+
+func (r *Repository) StatsForEmployee(ctx context.Context, employeeID int, from, to *time.Time) (domain.AttendanceStats, error) {
+	row := r.dbtx(ctx).QueryRowContext(ctx,
+		`SELECT days_present, days_late, total_hours, avg_hours
+		 FROM fn_employee_stats($1, $2, $3)`,
+		employeeID, from, to,
+	)
+
+	var s domain.AttendanceStats
+	var totalHours, avgHours float64
+	if err := row.Scan(&s.DaysPresent, &s.DaysLate, &totalHours, &avgHours); err != nil {
+		return domain.AttendanceStats{}, err
+	}
+	s.TotalHours = totalHours
+	s.AverageHours = avgHours
+	return s, nil
+}
+
 func (r *Repository) CountByEmployee(ctx context.Context, employeeID int, from, to *time.Time) (int, error) {
 	var (
 		conds = []string{"employee_id = $1"}

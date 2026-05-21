@@ -67,28 +67,12 @@ func (s *Service) MyHistory(ctx context.Context, employeeID int, from, to *time.
 	return s.repo.ListByEmployee(ctx, employeeID, from, to, s.threshold(ctx), limit, offset)
 }
 
+func (s *Service) CountPresentToday(ctx context.Context, deptID *int) (int, error) {
+	return s.repo.CountPresentToday(ctx, deptID)
+}
+
 func (s *Service) MyStats(ctx context.Context, employeeID int, from, to *time.Time) (domain.AttendanceStats, error) {
-	rows, err := s.repo.ListByEmployee(ctx, employeeID, from, to, s.threshold(ctx), 0, 0)
-	if err != nil {
-		return domain.AttendanceStats{}, err
-	}
-
-	var stats domain.AttendanceStats
-	for _, a := range rows {
-		stats.DaysPresent++
-		if a.Status == domain.AttendanceStatusLate {
-			stats.DaysLate++
-		}
-		if a.CheckOut != nil {
-			stats.TotalHours += a.CheckOut.Sub(a.CheckIn).Hours()
-		}
-	}
-
-	if stats.DaysPresent > 0 {
-		stats.AverageHours = stats.TotalHours / float64(stats.DaysPresent)
-	}
-
-	return stats, nil
+	return s.repo.StatsForEmployee(ctx, employeeID, from, to)
 }
 
 func (s *Service) CountFiltered(ctx context.Context, f domain.AttendanceFilter) (int, error) {

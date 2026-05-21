@@ -10,6 +10,7 @@ import (
 
 	"github.com/asey0u/attendance-service/internal/database"
 	"github.com/asey0u/attendance-service/internal/domain"
+	"github.com/lib/pq"
 )
 
 var ErrNotFound = errors.New("ticket not found")
@@ -170,18 +171,16 @@ func (r *Repository) List(ctx context.Context, f domain.TicketFilter) ([]domain.
 }
 
 func (r *Repository) UpdateStatus(ctx context.Context, id int, status string, reviewerUserID int) error {
-	res, err := r.dbtx(ctx).ExecContext(ctx, `
-		UPDATE tickets
-		SET status = $1, reviewed_by = $2, reviewed_at = now()
-		WHERE id = $3 AND status = 'pending'
-	`, status, reviewerUserID, id)
+	_, err := r.dbtx(ctx).ExecContext(ctx,
+		`CALL pr_review_ticket($1, $2, $3)`,
+		id, reviewerUserID, status,
+	)
 	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "P0404" {
+			return ErrNotFound
+		}
 		return err
-	}
-
-	n, _ := res.RowsAffected()
-	if n == 0 {
-		return ErrNotFound
 	}
 
 	return nil

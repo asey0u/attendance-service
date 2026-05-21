@@ -32,12 +32,6 @@ CREATE TABLE IF NOT EXISTS attendance (
     check_out   TIMESTAMP NULL
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_attendance_employee_day
-    ON attendance(employee_id, ((check_in)::date));
-
-CREATE INDEX IF NOT EXISTS idx_attendance_employee
-    ON attendance(employee_id, check_in);
-
 CREATE TABLE IF NOT EXISTS tickets (
     id          SERIAL PRIMARY KEY,
     employee_id INT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
@@ -49,6 +43,16 @@ CREATE TABLE IF NOT EXISTS tickets (
     reviewed_at TIMESTAMP NULL,
     created_at  TIMESTAMP NOT NULL DEFAULT now()
 );
+
+ALTER TABLE departments DROP CONSTRAINT IF EXISTS fk_dept_manager;
+ALTER TABLE departments ADD CONSTRAINT fk_dept_manager
+    FOREIGN KEY (manager_id) REFERENCES users(id) ON DELETE SET NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_attendance_employee_day
+    ON attendance(employee_id, ((check_in)::date));
+
+CREATE INDEX IF NOT EXISTS idx_attendance_employee
+    ON attendance(employee_id, check_in);
 
 CREATE INDEX IF NOT EXISTS idx_tickets_status   ON tickets(status);
 CREATE INDEX IF NOT EXISTS idx_tickets_employee ON tickets(employee_id);
