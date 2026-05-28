@@ -17,6 +17,16 @@ type DBTX interface {
 
 type ctxKey struct{}
 
+func BeginTx(ctx context.Context, db DBTX) (*sql.Tx, error) {
+	type beginner interface {
+		BeginTx(context.Context, *sql.TxOptions) (*sql.Tx, error)
+	}
+	if b, ok := db.(beginner); ok {
+		return b.BeginTx(ctx, nil)
+	}
+	return nil, fmt.Errorf("db does not support transactions")
+}
+
 func WithDB(ctx context.Context, db DBTX) context.Context {
 	return context.WithValue(ctx, ctxKey{}, db)
 }

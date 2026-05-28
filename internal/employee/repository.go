@@ -142,7 +142,13 @@ func (r *Repository) Create(ctx context.Context, e *domain.Employee) (int, error
 }
 
 func (r *Repository) Delete(ctx context.Context, id int) error {
-	res, err := r.dbtx(ctx).ExecContext(ctx, `DELETE FROM employees WHERE id = $1`, id)
+	tx, err := database.BeginTx(ctx, r.dbtx(ctx))
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	res, err := tx.ExecContext(ctx, `DELETE FROM employees WHERE id = $1`, id)
 	if err != nil {
 		return err
 	}
@@ -152,7 +158,7 @@ func (r *Repository) Delete(ctx context.Context, id int) error {
 		return ErrNotFound
 	}
 
-	return nil
+	return tx.Commit()
 }
 
 func (r *Repository) AssignDepartment(ctx context.Context, id int, departmentID *int) error {

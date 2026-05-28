@@ -82,7 +82,15 @@ func (r *Repository) TodaySession(ctx context.Context, employeeID int, threshold
 }
 
 func (r *Repository) CheckIn(ctx context.Context, employeeID int, t time.Time, threshold string) (*domain.Attendance, error) {
-	existing, err := r.OpenSessionToday(ctx, employeeID)
+	tx, err := database.BeginTx(ctx, r.dbtx(ctx))
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	txCtx := database.WithDB(ctx, tx)
+
+	existing, err := r.OpenSessionToday(txCtx, employeeID)
 	if err == nil {
 		existing.Status = domain.DeriveStatus(existing.CheckIn, threshold)
 		return existing, ErrAlreadyOpen
@@ -92,11 +100,15 @@ func (r *Repository) CheckIn(ctx context.Context, employeeID int, t time.Time, t
 	}
 
 	var id int
-	if err = r.dbtx(ctx).QueryRowContext(ctx, `
+	if err = r.dbtx(txCtx).QueryRowContext(txCtx, `
 		INSERT INTO attendance(employee_id, check_in)
 		VALUES ($1, $2)
 		RETURNING id
 	`, employeeID, t).Scan(&id); err != nil {
+		return nil, err
+	}
+
+	if err = tx.Commit(); err != nil {
 		return nil, err
 	}
 
@@ -109,8 +121,16 @@ func (r *Repository) CheckIn(ctx context.Context, employeeID int, t time.Time, t
 }
 
 func (r *Repository) CheckOut(ctx context.Context, employeeID int, t time.Time, threshold string) (*domain.Attendance, error) {
+	tx, err := database.BeginTx(ctx, r.dbtx(ctx))
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	txCtx := database.WithDB(ctx, tx)
+
 	var sessionID int
-	err := r.dbtx(ctx).QueryRowContext(ctx, `
+	err = r.dbtx(txCtx).QueryRowContext(txCtx, `
 		SELECT id FROM attendance
 		WHERE employee_id = $1 AND check_out IS NULL
 		ORDER BY check_in DESC
@@ -123,19 +143,23 @@ func (r *Repository) CheckOut(ctx context.Context, employeeID int, t time.Time, 
 		return nil, err
 	}
 
-	if _, err = r.dbtx(ctx).ExecContext(ctx, `
+	if _, err = r.dbtx(txCtx).ExecContext(txCtx, `
 		UPDATE attendance SET check_out = $1 WHERE id = $2
 	`, t, sessionID); err != nil {
 		return nil, err
 	}
 
-	row := r.dbtx(ctx).QueryRowContext(ctx, `
+	row := r.dbtx(txCtx).QueryRowContext(txCtx, `
 		SELECT id, employee_id, check_in, check_out
 		FROM attendance WHERE id = $1
 	`, sessionID)
 
 	var a domain.Attendance
 	if err = row.Scan(&a.ID, &a.EmployeeID, &a.CheckIn, &a.CheckOut); err != nil {
+		return nil, err
+	}
+
+	if err = tx.Commit(); err != nil {
 		return nil, err
 	}
 
@@ -348,7 +372,13 @@ func (r *Repository) ListFiltered(ctx context.Context, f domain.AttendanceFilter
 }
 
 func (r *Repository) Delete(ctx context.Context, id int) error {
-	res, err := r.dbtx(ctx).ExecContext(ctx, `DELETE FROM attendance WHERE id = $1`, id)
+	tx, err := database.BeginTx(ctx, r.dbtx(ctx))
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	res, err := tx.ExecContext(ctx, `DELETE FROM attendance WHERE id = $1`, id)
 	if err != nil {
 		return err
 	}
@@ -358,5 +388,5 @@ func (r *Repository) Delete(ctx context.Context, id int) error {
 		return ErrNotFound
 	}
 
-	return nil
+	return tx.Commit()
 }

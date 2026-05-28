@@ -159,7 +159,13 @@ func (r *Repository) ListUsers(ctx context.Context, limit, offset int) ([]domain
 }
 
 func (r *Repository) DeleteUser(ctx context.Context, id int) error {
-	res, err := r.dbtx(ctx).ExecContext(ctx, `DELETE FROM users WHERE id = $1`, id)
+	tx, err := database.BeginTx(ctx, r.dbtx(ctx))
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	res, err := tx.ExecContext(ctx, `DELETE FROM users WHERE id = $1`, id)
 	if err != nil {
 		return err
 	}
@@ -169,7 +175,7 @@ func (r *Repository) DeleteUser(ctx context.Context, id int) error {
 		return ErrUserNotFound
 	}
 
-	return nil
+	return tx.Commit()
 }
 
 func (r *Repository) UpdateUserRole(ctx context.Context, id int, roleName string) error {

@@ -66,6 +66,9 @@ END;
 $$;
 
 
+GRANT SELECT ON v_attendance_today TO attendance_admin, attendance_manager;
+GRANT SELECT ON v_pending_tickets  TO attendance_admin, attendance_manager;
+
 CREATE OR REPLACE PROCEDURE pr_review_ticket(
     p_ticket_id      INT,
     p_reviewer_id    INT,
